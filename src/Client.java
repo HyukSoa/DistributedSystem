@@ -14,7 +14,7 @@ import java.util.Random;
 /**
  * Created by huanyuhello on 5/9/2016.
  */
-public class Client {
+public class Client implements ClientRMIInterface{
     int Maze[][] = new int[20][20];
     //MazeState mazeState = new MazeState();
     GameMsg gameMsg = new GameMsg();
@@ -31,7 +31,6 @@ public class Client {
     String UserId =new String();
     FindServerIntef findServerIntef;
     public Client() {
-
 
         try {
             //在RMI服务注册表中查找名称为Trakcer的对象，并调用其上的方法
@@ -57,53 +56,6 @@ public class Client {
             System.out.println(Tracker.GetNForTracker());
             gameMsg.SetK_Num(Tracker.GetNForTracker());
             System.out.println(Tracker.GetNForTracker());
-
-            ArrayList arrayList = gameMsg.GetUserList();
-            //在RMI服务注册表中查找名称为Trakcer的对象，并调用其上的方法
-            //System.out.println(arrayList.toString());
-
-            if (arrayList.size() == 2) {
-                JoinState = 1;
-            } else {
-
-                for (int index = 0; index < arrayList.size(); index++) {
-
-                    findServerIntef = (FindServerIntef) Naming.lookup("rmi://" + arrayList.get(index).toString() + "/find");
-                    System.out.println(findServerIntef);
-                    if ((findServerIntef.FirstGetPrimServer() != null) && (findServerIntef.FirstGetBackupServer() != null)) {
-                        gameMsg.SetisServer(0);
-                        JoinState = 3;
-                        break;
-                    } else if ((findServerIntef.FirstGetBackupServer() == null) && (findServerIntef.FirstGetBackupServer() != null)) {
-
-                        JoinState = 2;
-                        break;
-                    } else {
-                        gameMsg.SetisServer(1);
-                        JoinState = 1;
-                    }
-                }
-            }
-            switch (JoinState) {
-                case 1:
-                    InitMaze();
-                    Server = new Server();
-                    gameMsg.SetPrimServer(gameMsg.GetLocalHost());
-                    System.out.println(JoinState);
-                    break;
-                case 2:
-                    JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
-                    Maze = JoinUp.getMaze().clone();
-                    break;
-                case 3:
-                    JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
-                    Maze = JoinUp.getMaze().clone();
-                    break;
-                default:
-                    break;
-            }
-
-
         } catch (NotBoundException e) {
 
         } catch (MalformedURLException e) {
@@ -117,6 +69,73 @@ public class Client {
         } catch (IOException e) {
 
         }
+        ArrayList arrayList = gameMsg.GetUserList();
+        //在RMI服务注册表中查找名称为Trakcer的对象，并调用其上的方法
+        //System.out.println(arrayList.toString());
+
+        if (arrayList.size() == 2) {
+            JoinState = 1;
+            gameMsg.SetisServer(1);
+        } else {
+
+
+            for (int index = 0; index < arrayList.size(); index +=2 ) {
+
+                try {
+                    findServerIntef = (FindServerIntef) Naming.lookup("rmi://" + arrayList.get(index).toString() + "/find");
+                }catch (RemoteException e) {
+                    JoinState = 1;
+                    gameMsg.SetisServer(1);
+                    continue;
+                } catch (NotBoundException e) {
+                    JoinState = 1;
+                    gameMsg.SetisServer(1);
+                    continue;
+                } catch (MalformedURLException e) {
+                    JoinState = 1;
+                    gameMsg.SetisServer(1);
+                    continue;
+                }
+
+                if ((findServerIntef.FirstGetPrimServer() != null) && (findServerIntef.FirstGetBackupServer() != null)) {
+                    gameMsg.SetisServer(0);
+                    JoinState = 3;
+                    break;
+                } else if ((findServerIntef.FirstGetBackupServer() == null) && (findServerIntef.FirstGetBackupServer() != null)) {
+                    JoinState = 2;
+                    break;
+                } else {
+                    gameMsg.SetisServer(1);
+                    JoinState = 1;
+                }
+            }
+        }
+        try {
+            switch (JoinState) {
+                case 1:
+                    InitMaze();
+                    Server = new Server();
+                    gameMsg.SetPrimServer(gameMsg.GetLocalHost());
+                    System.out.println("JoinState "+ JoinState);
+                    break;
+                case 2:
+                    JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
+                    Maze = JoinUp.getMaze().clone();
+                    break;
+                case 3:
+                    JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
+                    Maze = JoinUp.getMaze().clone();
+                    break;
+                default:
+                    break;
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
 
@@ -183,26 +202,26 @@ public class Client {
                         break;
                     case '4':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = Server.movePosition(gameMsg.GetUserName(),MoveAction.goUp);
-                        }
-                        else {
-                            JoinUp = clientServer.movePosition(gameMsg.GetUserName(), MoveAction.goUp);
-                        }
-                        break;
-                    case '0':
-                        if (gameMsg.GetIsServer() == 1) {
                             JoinUp = Server.movePosition(gameMsg.GetUserName(),MoveAction.goRight);
                         }
                         else {
                             JoinUp = clientServer.movePosition(gameMsg.GetUserName(), MoveAction.goRight);
                         }
                         break;
-                    case '9':
+                    case '0':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = Server.movePosition(gameMsg.GetUserName(),MoveAction.goUp);
+                            JoinUp = Server.refreshSate(gameMsg.GetUserName());
                         }
                         else {
-                            JoinUp = clientServer.movePosition(gameMsg.GetUserName(), MoveAction.goUp);
+                            JoinUp = clientServer.refreshSate(gameMsg.GetUserName());
+                        }
+                        break;
+                    case '9':
+                        if (gameMsg.GetIsServer() == 1) {
+                            Server.exitGame(gameMsg.GetUserName());
+                        }
+                        else {
+                            clientServer.exitGame(gameMsg.GetUserName());
                         }
                         break;
                     default:
@@ -274,4 +293,30 @@ public class Client {
         return  i;
     }
 
+    @Override
+    public boolean becomeBackup() throws RemoteException {
+        gameMsg.SetisServer(2);
+        return true;
+    }
+
+    @Override
+    public String getPrimaryServer() throws RemoteException {
+        return gameMsg.GetPrimServer();
+    }
+
+    @Override
+    public String getBackupServer() throws RemoteException {
+        return gameMsg.GetBackupServer();
+    }
+
+    @Override
+    public boolean callClient() throws RemoteException {
+        return true;
+    }
+
+    @Override
+    public void updateServer(String primaryServerId, String backupServerId) throws RemoteException {
+        gameMsg.SetPrimServer(primaryServerId);
+        gameMsg.SetBackupServer(backupServerId);
+    }
 }
