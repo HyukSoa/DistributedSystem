@@ -3,6 +3,7 @@ import java.rmi.RemoteException;
 
 /**
  * Created by Hae on 16/9/7.
+ * Server提供的RMI函数
  */
 public interface ClientServerInterf extends Remote {
     public MazeAndScore addPlayer(String playerId) throws RemoteException;
