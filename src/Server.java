@@ -7,7 +7,7 @@ import java.util.Random;
  * Created by huanyuhello on 5/9/2016.
  * Server.java
  */
-public class Server extends UnicastRemoteObject implements ClientServerInterf, PrimaryBackupServerInterf {
+public class Server extends UnicastRemoteObject implements ClientServerInterf {
 
     private GameMsg gameMsg = new GameMsg();
     private Random random = new Random();
