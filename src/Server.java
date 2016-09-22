@@ -296,17 +296,34 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
         for (int i = 0; i < localPlayerScoreList.size(); i += 3) {
             String playerId = (String) localPlayerScoreList.get(i);
             if (playerId.equals(gameMsg.GetUserName()))  continue;
-            try {
-                ClientRMIInterface crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + playerId);
-                if (crmi != null)    crmi.callClient();
-                // if no exception occurs, add this player to recentPlayers.
-                alivePlayers.add(playerId);
-            } catch (NotBoundException | MalformedURLException | RemoteException e) {  // if it's not available, then:
-                e.printStackTrace();
+            ClientRMIInterface crmi;
+            if (cri.containsKey(playerId)) {
+                crmi = cri.get(playerId);
                 try {
-                    exitGame(playerId);
-                } catch (RemoteException e1) {
-                    e1.printStackTrace();
+                    crmi.callClient();
+                    alivePlayers.add(playerId);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    try {
+                        exitGame(playerId);
+                        cri.remove(playerId);
+                    } catch (RemoteException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            } else {
+                try {
+                    crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + playerId);
+                    cri.put(playerId, crmi);
+                    // if no exception occurs, add this player to recentPlayers.
+                    alivePlayers.add(playerId);
+                } catch (NotBoundException | MalformedURLException | RemoteException e) {  // if it's not available, then:
+                    e.printStackTrace();
+                    try {
+                        exitGame(playerId);
+                    } catch (RemoteException e1) {
+                        e1.printStackTrace();
+                    }
                 }
             }
         }
@@ -324,11 +341,12 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
         String playerId;
         while (it.hasNext()) {
             playerId = it.next();
-            ClientRMIInterface crmi = null;
+            assert cri.containsKey(playerId);
+            ClientRMIInterface crmi = cri.get(playerId);
+
             try {
-                crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + playerId);
-                if (crmi != null)    crmi.updateServer(ps, bs);
-            } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                crmi.updateServer(ps, bs);
+            } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
@@ -342,6 +360,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     private void handleBackupFail() {
         HashSet<String> alivePlayers = getAllAlive();
         if (alivePlayers.isEmpty()) {  // only one player
+            csi = null;
             gameMsg.SetBackupServer("");
         } else {
             String newBackup = alivePlayers.iterator().next();
