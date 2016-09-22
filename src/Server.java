@@ -274,7 +274,8 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     private boolean genBackup(String newBackup) {
         ClientRMIInterface crmi;
         try {
-            crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + newBackup);
+            assert cri.containsKey(newBackup);
+            crmi = cri.get(newBackup);
             crmi.becomeBackup();
             csi = (ClientServerInterf) Naming.lookup(serverPrefix + newBackup);
             csi.regularBackup(refreshSate(gameMsg.GetUserName()));
@@ -373,7 +374,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     public void run() {
 
         int timeout = 200;
-
+        System.out.println("Server " + gameMsg.GetUserName() + "started!");
         while (true) {
             if (gameMsg.GetIsServer() == 1){  // primary server
                 // assert gameMsg
@@ -391,10 +392,21 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             } else {  // backup server
 
                 String ps = gameMsg.GetPrimServer();
+                ClientRMIInterface bcri = null;
+                if (cri.containsKey(ps))
+                    bcri = cri.get(ps);
+                else {
+                    try {
+                        bcri = (ClientRMIInterface) Naming.lookup(serverPrefix + ps);
+                    } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    cri.put(ps, bcri);
+                }
                 try {
-                    ClientRMIInterface cri = (ClientRMIInterface) Naming.lookup(serverPrefix + ps);
-                    cri.callClient();
-                } catch (NotBoundException | MalformedURLException | RemoteException e) {  // primary server fails
+                    assert bcri != null;
+                    bcri.callClient();
+                } catch (RemoteException e) {  // primary server fails
                     // turn myself to primary server
                     String me = gameMsg.GetBackupServer();
                     assert me.equals(gameMsg.GetUserName());
