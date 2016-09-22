@@ -36,21 +36,24 @@ public class Client {
     ClientRMIInterface clientRMIInterface;
     Thread thread;
 
-    public Client() {
+    public Client(String ID) {
 
         try {
             //在RMI服务注册表中查找名称为Trakcer的对象，并调用其上的方法
             TrackerInterface Tracker = (TrackerInterface) Naming.lookup("rmi://localhost:8888/Tracker");
-            BufferedReader buf = new BufferedReader(new InputStreamReader(System.in));
-            boolean judege = false;
+            //BufferedReader buf = new BufferedReader(new InputStreamReader(System.in));
+            /*boolean judege = false;
             while (!judege) {
+
                 UserId = buf.readLine();
-                if (Tracker.helloWorld(UserId)) {
+                if () {
                     judege = true;
                 } else {
                     System.out.println("error wrong name");
                 }
-            }
+            }*/
+            UserId = ID;
+            Tracker.helloWorld(UserId);
             System.out.println("Set name Successful");
             gameMsg.SetUserName(UserId);
             System.out.println(UserId);
@@ -66,11 +69,7 @@ public class Client {
 
         } catch (RemoteException e) {
 
-        } catch (UnknownHostException e) {
-
-        } catch (ConnectException e) {
-
-        } catch (IOException e) {
+        }  catch (IOException e) {
 
         }
         ArrayList arrayList = gameMsg.GetUserList();
@@ -234,7 +233,7 @@ public class Client {
                             JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goUp);
                         }
                         else {
-                            System.out.println("gameMSG :" + gameMsg.GetUserName());
+                            //System.out.println("gameMSG :" + gameMsg.GetUserName());
                             JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goUp);
                             MazeState.Maze = JoinUp.getMaze().clone();
                             MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
@@ -300,7 +299,7 @@ public class Client {
                 }
                 else {
                     gui.repaint();
-                    System.out.println("Socore list : "+ Score);
+                    //System.out.println("Socore list : "+ Score);
                     //UserList = (ArrayList) updateData.SendMovement((int)c).clone();
                 }
             } catch (IOException e) {
@@ -337,14 +336,14 @@ public class Client {
         Maze[LocalX][LocalY] = 1;
 
         MazeState.SetMaze(Maze);
-        for(int i = 0; i<N_Num;i++)
+        /*for(int i = 0; i<N_Num;i++)
         {
             for (int j = 0;j<N_Num;j++)
             {
                 System.out.print(Maze[i][j]+ " " );
             }
             System.out.println();
-        }
+        }*/
         //System.out.println(Maze.);
         Score.add(UserId);
         Score.add(0);

@@ -79,7 +79,7 @@ public class GUI extends JFrame {
         list = (ArrayList) listt.clone();
         maze = Mexturet.clone();
         this.setBounds(300, 100, 1200, 1200);
-        this.setTitle("JList的两种使用方式：推荐第二种使用方式");
+        this.setTitle("GameMaze     " + Client.UserId + "  ");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jPanelTop = new MyPanel();
         jPanelBottom = new JPanel();

@@ -18,7 +18,7 @@ public class Game {
     {
        /* BufferedReader buf = new BufferedReader (new InputStreamReader(System.in));
         String string = buf.toString();*/
-        Client client = new Client();
+        Client client = new Client(args[3]);
         client.InitGame();
         System.out.println("hello");
     }
