@@ -136,6 +136,7 @@ public class Client {
 
                     JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
                     Maze = JoinUp.getMaze().clone();
+
                     break;
                 case 3:
                     clientServerInterf = (ClientServerInterf) Naming.lookup("rmi://localhost:7000/" + gameMsg.GetPrimServer());
@@ -175,8 +176,8 @@ public class Client {
         int UserNum = 5;
         if(gameMsg.GetIsServer() == 1)
         {
-            Maze = gameMsg.mazeState.GetMaze().clone();
-            Score = (ArrayList) gameMsg.mazeState.GetPlayerScoreList().clone();
+            Maze = MazeState.GetMaze().clone();
+            Score = (ArrayList) MazeState.PlayerScoreList.clone();
             System.out.println("Score list : " +Score.toString());
         }
         else {
@@ -208,8 +209,8 @@ public class Client {
         ArrayList UserList = new ArrayList();
         while (IsGoing) {
             if (gameMsg.GetIsServer() == 1) {
-                Maze = gameMsg.mazeState.GetMaze().clone();
-                Score = (ArrayList) gameMsg.mazeState.GetPlayerScoreList().clone();
+                Maze = MazeState.GetMaze().clone();
+                Score = (ArrayList) MazeState.PlayerScoreList.clone();
             }
             else {
                 System.out.println("gameMSG :" + gameMsg.GetUserName());
@@ -231,6 +232,9 @@ public class Client {
                         else {
                             System.out.println("gameMSG :" + gameMsg.GetUserName());
                             JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goUp);
+                            MazeState.Maze = JoinUp.getMaze().clone();
+                            MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
+
                         }
                         break;
                     case '2':
@@ -239,6 +243,8 @@ public class Client {
                         }
                         else {
                             JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goDown);
+                            MazeState.Maze = JoinUp.getMaze().clone();
+                            MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '3':
@@ -247,6 +253,8 @@ public class Client {
                         }
                         else {
                             JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goLeft);
+                            MazeState.Maze = JoinUp.getMaze().clone();
+                            MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '4':
@@ -255,6 +263,8 @@ public class Client {
                         }
                         else {
                             JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goRight);
+                            MazeState.Maze = JoinUp.getMaze().clone();
+                            MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '0':
@@ -263,6 +273,8 @@ public class Client {
                         }
                         else {
                             JoinUp = clientServerInterf.refreshSate(gameMsg.GetUserName());
+                            MazeState.Maze = JoinUp.getMaze().clone();
+                            MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '9':
@@ -331,8 +343,8 @@ public class Client {
         }
         //System.out.println(Maze.);
         Score.add(UserId);
-        Score.add((int)0);
-        Score.add((int)1);
+        Score.add(0);
+        Score.add(1);
         mazeState.SetPlayerScoreList(Score);
     }
 

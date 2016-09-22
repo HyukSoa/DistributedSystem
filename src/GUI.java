@@ -17,7 +17,7 @@ public class GUI extends JFrame {
     DefaultListModel defaultListModel;
     int[][] maze = new int[20][20];
     ArrayList list = new ArrayList();
-    GameMsg gameMsg;
+    //GameMsg gameMsg;
     private static final long serialVersionUID = 1L;
 
     class MyPanel extends JPanel {
@@ -32,7 +32,7 @@ public class GUI extends JFrame {
             graphics.setColor(Color.BLACK);
             //设置画笔大小
             graphics.setFont(new Font(null, 0, 45));
-
+            maze = MazeState.GetMaze().clone();
             for (int i = 0; i < 15; i++) {
                 for (int j = 0; j < 15; j++) {
                     //g.setColor(Color.blue);
@@ -52,7 +52,7 @@ public class GUI extends JFrame {
                 }
             }
             //System.out.println("GUI list:  " + gameMsg.mazeState.GetPlayerScoreList().clone());
-            list = (ArrayList) gameMsg.mazeState.GetPlayerScoreList().clone();
+            list = (ArrayList) MazeState.PlayerScoreList.clone();
             String string = new String();
             defaultListModel.clear();
             for (int i = 0; i < list.size(); i++) {
