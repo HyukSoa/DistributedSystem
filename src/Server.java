@@ -2,12 +2,8 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Random;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
@@ -19,8 +15,11 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
 
     private GameMsg gameMsg = new GameMsg();
     private Random random = new Random();
-    String clientPrefix = "rmi://localhost:8000/";
-    String serverPrefix = "rmi://localhost:7000/";
+    private ClientServerInterf csi = null;
+    private HashMap<String, ClientRMIInterface> cri = null;
+
+    private String clientPrefix = "rmi://localhost:8000/";
+    private String serverPrefix = "rmi://localhost:7000/";
 
     /**
      * 必须定义构造方法，即使是默认构造方法，也必须把它明确地写出来，因为它必须抛出RemoteException异常
@@ -265,7 +264,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
         try {
             crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + newBackup);
             crmi.becomeBackup();
-            ClientServerInterf csi = (ClientServerInterf) Naming.lookup(serverPrefix + newBackup);
+            csi = (ClientServerInterf) Naming.lookup(serverPrefix + newBackup);
             csi.regularBackup(refreshSate(gameMsg.GetUserName()));
             gameMsg.SetBackupServer(newBackup);
         } catch (NotBoundException | MalformedURLException | RemoteException e) {
@@ -343,9 +342,10 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     public void run() {
 
         int timeout = 200;
-        if (gameMsg.GetIsServer() == 1) { // primary server
-            while (true) {
 
+        while (true) {
+            if (gameMsg.GetIsServer() == 1){  // primary server
+                // assert gameMsg
                 HashSet<String> alivePlayers = getAllAlive();
                 String bs = gameMsg.GetBackupServer();
                 if (bs.equals("") || !alivePlayers.contains(bs)) {  // there is no backup server
@@ -356,9 +356,9 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            }
-        } else { // backup server
-            while (true) {
+
+            } else {  // backup server
+
                 String ps = gameMsg.GetPrimServer();
                 try {
                     ClientRMIInterface cri = (ClientRMIInterface) Naming.lookup(serverPrefix + ps);
