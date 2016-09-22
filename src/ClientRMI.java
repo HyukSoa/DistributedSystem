@@ -1,4 +1,7 @@
+import java.net.MalformedURLException;
+import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 /**
@@ -16,6 +19,12 @@ public class ClientRMI extends UnicastRemoteObject implements ClientRMIInterface
         gameMsg.SetisServer(2);
         gameMsg.SetBackupServer(Client.UserId);
         backserver=new Server();
+        LocateRegistry.createRegistry(7000);//serverIP
+        try {
+            Naming.rebind("rmi://localhost:7000/"+Client.UserId, backserver);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
         backthread = new Thread(backserver);
         backthread.start();
         return true;

@@ -19,6 +19,8 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
 
     private GameMsg gameMsg = new GameMsg();
     private Random random = new Random();
+    String clientPrefix = "rmi://localhost:8000/";
+    String serverPrefix = "rmi://localhost:7000/";
 
     /**
      * 必须定义构造方法，即使是默认构造方法，也必须把它明确地写出来，因为它必须抛出RemoteException异常
@@ -254,12 +256,16 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
         return randomPos;
     }
 
+    /**
+     * @param newBackup The player id of chosen player to be backup.
+     * @return Call its becomeBackup, call regularBackup, set my BackupServer field.
+     */
     private boolean genBackup(String newBackup) {
         ClientRMIInterface crmi;
         try {
-            crmi = (ClientRMIInterface) Naming.lookup("rmi://localhost:9999" + newBackup + "_client");
+            crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + newBackup);
             crmi.becomeBackup();
-            ClientServerInterf csi = (ClientServerInterf) Naming.lookup("rmi://localhost:9999" + newBackup + "_server");
+            ClientServerInterf csi = (ClientServerInterf) Naming.lookup(serverPrefix + newBackup);
             csi.regularBackup(refreshSate(gameMsg.GetUserName()));
             gameMsg.SetBackupServer(newBackup);
         } catch (NotBoundException | MalformedURLException | RemoteException e) {
@@ -268,7 +274,11 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
         return true;
     }
 
-    // return all alive players at this moment, NOT including *THIS*
+    /**
+     * Call every player in the player score list,
+     * if remote exception occurs with player p, call exitGame(p).
+     * @return all alive players at this moment, NOT including *THIS*
+     */
     private HashSet<String> getAllAlive() {
         ArrayList localPlayerScoreList = (ArrayList) gameMsg.mazeState.GetPlayerScoreList().clone();
         HashSet<String> alivePlayers = new HashSet<>();
@@ -276,40 +286,103 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             String playerId = (String) localPlayerScoreList.get(i);
             if (playerId.equals(gameMsg.GetUserName()))  continue;
             try {
-                ClientRMIInterface crmi = (ClientRMIInterface) Naming.lookup("rmi://localhost:9999" + playerId + "_client");
+                ClientRMIInterface crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + playerId);
                 if (crmi != null)    crmi.callClient();
                 // if no exception occurs, add this player to recentPlayers.
                 alivePlayers.add(playerId);
             } catch (NotBoundException | MalformedURLException | RemoteException e) {  // if it's not available, then:
                 e.printStackTrace();
+                try {
+                    exitGame(playerId);
+                } catch (RemoteException e1) {
+                    e1.printStackTrace();
+                }
             }
         }
         return alivePlayers;
     }
 
+    /**
+     * @param alivePlayers just checked all alive players (other than myself)
+     * @param ps primary server player id
+     * @param bs backup server player id
+     * @return Update ps and bs to all alive players
+     */
+    private boolean broadcastServers(HashSet<String> alivePlayers, String ps, String bs) {
+        Iterator<String> it = alivePlayers.iterator();
+        String playerId;
+        while (it.hasNext()) {
+            playerId = it.next();
+            ClientRMIInterface crmi = null;
+            try {
+                crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + playerId);
+                if (crmi != null)    crmi.updateServer(ps, bs);
+            } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * If there is only one player, just set its backup server as null;
+     * else, generate new backup and broadcast ps and bs.
+     */
+    private void handleBackupFail() {
+        HashSet<String> alivePlayers = getAllAlive();
+        if (alivePlayers.isEmpty()) {  // only one player
+            gameMsg.SetBackupServer("");
+        } else {
+            String newBackup = alivePlayers.iterator().next();
+            genBackup(newBackup);
+            broadcastServers(alivePlayers, gameMsg.GetUserName(), newBackup);
+        }
+    }
+
     @Override
     public void run() {
+
+        int timeout = 200;
         if (gameMsg.GetIsServer() == 1) { // primary server
             while (true) {
+
+                HashSet<String> alivePlayers = getAllAlive();
+                String bs = gameMsg.GetBackupServer();
+                if (bs.equals("") || !alivePlayers.contains(bs)) {  // there is no backup server
+                    handleBackupFail();
+                }
                 try {
-                    sleep(200);
+                    sleep(timeout);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                HashSet<String> alivePlayers = getAllAlive();
-                if (!alivePlayers.contains(gameMsg.GetBackupServer())) {
-                    if (alivePlayers.isEmpty()) {
-
-                    } else {
-                        genBackup(alivePlayers.iterator().next());
-                    }
-
-                }
-
-                // notify all: setserver
             }
         } else { // backup server
+            while (true) {
+                String ps = gameMsg.GetPrimServer();
+                try {
+                    ClientRMIInterface cri = (ClientRMIInterface) Naming.lookup(serverPrefix + ps);
+                    cri.callClient();
+                } catch (NotBoundException | MalformedURLException | RemoteException e) {  // primary server fails
+                    // turn myself to primary server
+                    String me = gameMsg.GetBackupServer();
+                    assert me.equals(gameMsg.GetUserName());
+                    gameMsg.SetPrimServer(me);
+                    gameMsg.SetisServer(1);
 
+                    // designate another backup server (same to backup fail)
+                    HashSet<String> alivePlayers = getAllAlive();
+                    assert !alivePlayers.contains(ps);
+                    handleBackupFail();
+
+                    e.printStackTrace();
+                }
+                try {
+                    sleep(timeout/10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
