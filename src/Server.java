@@ -242,7 +242,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
      */
     public boolean callRMIBackup(MazeAndScore psMazeScore){
         try{
-            if (!gameMsg.GetBackupServer().equals(null)) {
+            if (gameMsg.GetBackupServer() != null || !gameMsg.GetBackupServer().equals("")) {
                 csi.regularBackup(psMazeScore);
             }
             return true;
@@ -374,13 +374,13 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     public void run() {
 
         int timeout = 200;
-        System.out.println("Server " + gameMsg.GetUserName() + "started!");
+        System.out.println("Server " + gameMsg.GetUserName() + " started!");
         while (true) {
             if (gameMsg.GetIsServer() == 1){  // primary server
                 // assert gameMsg
                 HashSet<String> alivePlayers = getAllAlive();
                 String bs = gameMsg.GetBackupServer();
-                if (bs.equals("") || !alivePlayers.contains(bs)) {  // there is no backup server
+                if (bs == null || bs.equals("") || !alivePlayers.contains(bs)) {  // there is no backup server
                     handleBackupFail();
                 }
                 try {
