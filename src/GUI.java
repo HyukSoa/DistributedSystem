@@ -17,7 +17,7 @@ public class GUI extends JFrame {
     DefaultListModel defaultListModel;
     int[][] maze = new int[20][20];
     ArrayList list = new ArrayList();
-
+    GameMsg gameMsg;
     private static final long serialVersionUID = 1L;
 
     class MyPanel extends JPanel {
@@ -40,28 +40,34 @@ public class GUI extends JFrame {
                     graphics.setColor(Color.BLACK);
                     graphics.drawRect(50 + j * 30, 50 + i * 30, 30, 30);
                     if (maze[i][j] == -1) {
-                        graphics.setColor(Color.ORANGE);
+                        graphics.setColor(Color.BLUE);
                         graphics.setFont(new Font(null, 0, 30));
                         graphics.drawString("*", 58 + j * 30, 83 + i * 30);
                     }
                     if ((maze[i][j] != 0)&&(maze[i][j] != -1)) {
                         graphics.setColor(Color.RED);
-                        graphics.setFont(new Font(null, 0, 30));
-                        graphics.drawString("1", 58 + j * 30, 83 + i * 30);
+                        graphics.setFont(new Font(null, 0, 25));
+                        graphics.drawString(String.valueOf(maze[i][j]), 58 + j * 30, 75 + i * 30);
                     }
                 }
             }
-            System.out.println(list);
+            //System.out.println("GUI list:  " + gameMsg.mazeState.GetPlayerScoreList().clone());
+            list = (ArrayList) gameMsg.mazeState.GetPlayerScoreList().clone();
+            String string = new String();
+            defaultListModel.clear();
             for (int i = 0; i < list.size(); i++) {
 
-                String string = new String();
+                string = "UserID : ";
                 string = string.concat(list.get(i).toString());
-                string = string.concat("->");
+                string = string.concat("  Curret Score : ");
+
                 i++;
                 string = string.concat(list.get(i).toString());
-                System.out.println(list.get(i));
+                string = string.concat("  Player ID : ");
+
                 i++;
-                defaultListModel.clear();
+                string = string.concat(list.get(i).toString());
+
                 defaultListModel.addElement(string);
             }
 
