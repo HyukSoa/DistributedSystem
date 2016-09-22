@@ -18,8 +18,8 @@ public class Game {
     {
        /* BufferedReader buf = new BufferedReader (new InputStreamReader(System.in));
         String string = buf.toString();*/
-       // Client client = new Client();
-       // client.InitGame();
+        Client client = new Client();
+        client.InitGame();
         System.out.println("hello");
     }
 }
