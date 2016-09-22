@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -20,7 +21,7 @@ public class Client implements ClientRMIInterface{
     GameMsg gameMsg = new GameMsg();
     MazeState mazeState = new MazeState();
     ClientServerInterf clientServer;
-    Server Server;
+    Server server;
     GUI gui;
     int JoinState = 0;
     boolean IsGoing = true;
@@ -30,6 +31,7 @@ public class Client implements ClientRMIInterface{
     ClientServerInterf clientServerInterf;
     String UserId =new String();
     FindServerIntef findServerIntef;
+
     public Client() {
 
         try {
@@ -39,13 +41,11 @@ public class Client implements ClientRMIInterface{
             boolean judege = false;
             while (!judege) {
                 UserId = buf.readLine();
-
                 if (Tracker.helloWorld(UserId) == true) {
                     judege = true;
                 } else {
                     System.out.println("error wrong name");
                 }
-
             }
             System.out.println("Set name Successful");
             gameMsg.SetUserName(UserId);
@@ -114,7 +114,9 @@ public class Client implements ClientRMIInterface{
             switch (JoinState) {
                 case 1:
                     InitMaze();
-                    Server = new Server();
+                    server = new Server();
+                    LocateRegistry.createRegistry(7777);
+                    Naming.rebind("rmi://localhost:7777/"+ UserId,server);
                     gameMsg.SetPrimServer(gameMsg.GetLocalHost());
                     System.out.println("JoinState "+ JoinState);
                     break;
@@ -133,9 +135,18 @@ public class Client implements ClientRMIInterface{
             e.printStackTrace();
         } catch (UnknownHostException e) {
             e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
 
-
+        try {
+            LocateRegistry.createRegistry(9999);
+            Naming.rebind("rmi://localhost:9999/"+ UserId,this);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -178,7 +189,7 @@ public class Client implements ClientRMIInterface{
                 {
                     case '1':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = Server.movePosition(gameMsg.GetUserName(),MoveAction.goUp);
+                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goUp);
                         }
                         else {
                             JoinUp = clientServer.movePosition(gameMsg.GetUserName(), MoveAction.goUp);
@@ -186,7 +197,7 @@ public class Client implements ClientRMIInterface{
                         break;
                     case '2':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = Server.movePosition(gameMsg.GetUserName(),MoveAction.goDown);
+                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goDown);
                         }
                         else {
                             JoinUp = clientServer.movePosition(gameMsg.GetUserName(), MoveAction.goDown);
@@ -194,7 +205,7 @@ public class Client implements ClientRMIInterface{
                         break;
                     case '3':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = Server.movePosition(gameMsg.GetUserName(),MoveAction.goLeft);
+                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goLeft);
                         }
                         else {
                             JoinUp = clientServer.movePosition(gameMsg.GetUserName(), MoveAction.goLeft);
@@ -202,7 +213,7 @@ public class Client implements ClientRMIInterface{
                         break;
                     case '4':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = Server.movePosition(gameMsg.GetUserName(),MoveAction.goRight);
+                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goRight);
                         }
                         else {
                             JoinUp = clientServer.movePosition(gameMsg.GetUserName(), MoveAction.goRight);
@@ -210,7 +221,7 @@ public class Client implements ClientRMIInterface{
                         break;
                     case '0':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = Server.refreshSate(gameMsg.GetUserName());
+                            JoinUp = server.refreshSate(gameMsg.GetUserName());
                         }
                         else {
                             JoinUp = clientServer.refreshSate(gameMsg.GetUserName());
@@ -218,7 +229,7 @@ public class Client implements ClientRMIInterface{
                         break;
                     case '9':
                         if (gameMsg.GetIsServer() == 1) {
-                            Server.exitGame(gameMsg.GetUserName());
+                            server.exitGame(gameMsg.GetUserName());
                         }
                         else {
                             clientServer.exitGame(gameMsg.GetUserName());

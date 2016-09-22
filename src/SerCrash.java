@@ -24,4 +24,9 @@ public class SerCrash implements ClientServerInterf {
     public void exitGame(String playerId) throws RemoteException {
 
     }
+
+    @Override
+    public boolean regularBackup(MazeAndScore primaryMazeScore) throws RemoteException {
+        return false;
+    }
 }
