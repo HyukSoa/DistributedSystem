@@ -13,6 +13,7 @@ public class ClientRMI extends UnicastRemoteObject implements ClientRMIInterface
     @Override
     public boolean becomeBackup() throws RemoteException {
         gameMsg.SetisServer(2);
+        gameMsg.SetBackupServer(gameMsg.GetUserName());
         return true;
     }
 

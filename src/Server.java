@@ -1,13 +1,21 @@
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
+
+import static java.lang.Thread.sleep;
 
 /**
  * Created by huanyuhello on 5/9/2016.
  * Server.java
  */
-public class Server extends UnicastRemoteObject implements ClientServerInterf {
+public class Server extends UnicastRemoteObject implements ClientServerInterf, Runnable {
 
     private GameMsg gameMsg = new GameMsg();
     private Random random = new Random();
@@ -165,7 +173,6 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf {
 
         returnValue.setMaze(localMaze);
         returnValue.setPlayerScoreList(localPlayerScoreList);
-
         return returnValue;
     }
 
@@ -247,5 +254,68 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf {
         return randomPos;
     }
 
+    private boolean genBackup(String newBackup) {
+        ClientRMIInterface crmi;
+        try {
+            crmi = (ClientRMIInterface) Naming.lookup("rmi://localhost:9999" + newBackup + "_client");
+            crmi.becomeBackup();
+            ClientServerInterf csi = (ClientServerInterf) Naming.lookup("rmi://localhost:9999" + newBackup + "_server");
+            csi.regularBackup(refreshSate(gameMsg.GetUserName()));
+            gameMsg.SetBackupServer(newBackup);
+        } catch (NotBoundException | MalformedURLException | RemoteException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
 
+    // return all alive players at this moment, NOT including *THIS*
+    private HashSet<String> getAllAlive() {
+        ArrayList localPlayerScoreList = (ArrayList) gameMsg.mazeState.GetPlayerScoreList().clone();
+        HashSet<String> alivePlayers = new HashSet<>();
+        for (int i = 0; i < localPlayerScoreList.size(); i += 3) {
+            String playerId = (String) localPlayerScoreList.get(i);
+            if (playerId.equals(gameMsg.GetUserName()))  continue;
+            try {
+                ClientRMIInterface crmi = (ClientRMIInterface) Naming.lookup("rmi://localhost:9999" + playerId + "_client");
+                if (crmi != null)    crmi.callClient();
+                // if no exception occurs, add this player to recentPlayers.
+                alivePlayers.add(playerId);
+            } catch (NotBoundException | MalformedURLException | RemoteException e) {  // if it's not available, then:
+                e.printStackTrace();
+            }
+        }
+        return alivePlayers;
+    }
+
+    @Override
+    public void run() {
+        if (gameMsg.GetIsServer() == 1) { // primary server
+            while (true) {
+                try {
+                    sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                HashSet<String> alivePlayers = getAllAlive();
+                if (!alivePlayers.contains(gameMsg.GetBackupServer())) {
+                    if (alivePlayers.isEmpty()) {
+
+                    } else {
+                        genBackup(alivePlayers.iterator().next());
+                    }
+
+                }
+
+                // notify all: setserver
+            }
+        } else { // backup server
+
+        }
+    }
 }
+
+
+
+
+
+
