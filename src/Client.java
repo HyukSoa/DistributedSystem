@@ -16,6 +16,8 @@ import java.util.Random;
  * Created by huanyuhello on 5/9/2016.
  */
 public class Client {
+
+    public static String UserId =new String();
     int Maze[][] = new int[15][15];
     //MazeState mazeState = new MazeState();
     GameMsg gameMsg = new GameMsg();
@@ -30,9 +32,9 @@ public class Client {
     MazeAndScore JoinUp;
     //MazeState updateData;
     ClientServerInterf clientServerInterf;
-    String UserId =new String();
+
     ClientRMIInterface clientRMIInterface;
-    //FindServerIntef findServerIntef;
+    Thread thread;
 
     public Client() {
 
@@ -43,7 +45,7 @@ public class Client {
             boolean judege = false;
             while (!judege) {
                 UserId = buf.readLine();
-                if (Tracker.helloWorld(UserId) == true) {
+                if (Tracker.helloWorld(UserId)) {
                     judege = true;
                 } else {
                     System.out.println("error wrong name");
@@ -58,7 +60,7 @@ public class Client {
             System.out.println(Tracker.GetNForTracker());
             gameMsg.SetK_Num(Tracker.GetNForTracker());
             System.out.println(Tracker.GetNForTracker());
-        } catch (NotBoundException e) {
+        } catch (NotBoundException ignored) {
 
         } catch (MalformedURLException e) {
 
@@ -129,6 +131,8 @@ public class Client {
                     LocateRegistry.createRegistry(7000);//serverIP
                     Naming.rebind("rmi://localhost:7000/"+UserId,server);
                     gameMsg.SetPrimServer(UserId);
+                    thread = new Thread(server);
+                    thread.start();
                     System.out.println("JoinState " + JoinState);
                     break;
                 case 2:

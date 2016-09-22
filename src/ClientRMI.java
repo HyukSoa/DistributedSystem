@@ -6,14 +6,18 @@ import java.rmi.server.UnicastRemoteObject;
  */
 public class ClientRMI extends UnicastRemoteObject implements ClientRMIInterface {
     GameMsg gameMsg = new GameMsg();
-
+    Server backserver;
+    Thread backthread;
     protected ClientRMI() throws RemoteException {
     }
 
     @Override
     public boolean becomeBackup() throws RemoteException {
         gameMsg.SetisServer(2);
-        gameMsg.SetBackupServer(gameMsg.GetUserName());
+        gameMsg.SetBackupServer(Client.UserId);
+        backserver=new Server();
+        backthread = new Thread(backserver);
+        backthread.start();
         return true;
     }
 
