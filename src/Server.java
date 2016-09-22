@@ -76,7 +76,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
 
         returnValue.setPlayerScoreList(localPlayerScoreList);
         returnValue.setMaze(localMaze);
-        //returnValue.setCurrentPosition(localPlayerPos);
+        callRMIBackup(returnValue); /*backup*/
         return returnValue;
     }
 
@@ -153,9 +153,9 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             gameMsg.mazeState.SetMaze(localMaze);
 
         }//释放锁
-        //returnValue.setCurrentPosition(localPlayerPos);
         returnValue.setMaze(localMaze);
         returnValue.setPlayerScoreList(localPlayerScoreList);
+        callRMIBackup(returnValue); /*backup*/
         return returnValue;
     }
 
@@ -185,6 +185,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
         ArrayList localPlayerScoreList;
         int playerIdIndex, playerNumId, mazeLength;
         int[] localPlayerPos = new int[2];
+        MazeAndScore backupValue = new MazeAndScore();
 
         synchronized (gameMsg.mazeState){
             localMaze = gameMsg.mazeState.GetMaze().clone();
@@ -213,7 +214,12 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             //save to GameMsg
             gameMsg.mazeState.SetMaze(localMaze);
             gameMsg.mazeState.SetPlayerScoreList(localPlayerScoreList);
+
         }
+        //save to backupValue and backup
+        backupValue.setMaze(localMaze);
+        backupValue.setPlayerScoreList(localPlayerScoreList);
+        callRMIBackup(backupValue); /*backup*/
 
     }
 
@@ -233,11 +239,17 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
 
     /**
      * 作为primary server,调用backup server进行备份。
-     * TODO 需要等GameMsg中的BackupServer变量更新完成
      */
-    public boolean callRMIBackup(){
-
-        return true;
+    public boolean callRMIBackup(MazeAndScore psMazeScore){
+        try{
+            if (!gameMsg.GetBackupServer().equals(null)) {
+                csi.regularBackup(psMazeScore);
+            }
+            return true;
+        }
+        catch (Exception e){
+            return false;
+        }
     }
 
 
