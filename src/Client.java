@@ -38,7 +38,7 @@ public class Client {
 
     ClientRMIInterface clientRMIInterface;
     Thread thread;
-    int timeout = 10;
+    int timeout = 0;
     boolean interupt = true;
     public Client(String ID) {
 
@@ -120,12 +120,13 @@ public class Client {
                     if ((Primary != null) && (Backup != null)) {
                         gameMsg.SetisServer(0);
                         gameMsg.SetPrimServer(Primary);
+                        gameMsg.SetBackupServer(Backup);
                         JoinState = 3;
                         break;
                     } else if ((Primary != null) && (Backup == null)) {
                         gameMsg.SetisServer(2);
                         gameMsg.SetPrimServer(Primary);
-                        gameMsg.SetBackupServer(gameMsg.GetUserName());
+                        gameMsg.SetBackupServer(UserId);
                         JoinState = 2;
                         break;
                     } else {
@@ -134,7 +135,7 @@ public class Client {
                         JoinState = 1;
                     }
                 } catch (RemoteException |NotBoundException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     JoinState = 1;
                     gameMsg.SetisServer(1);
                     gameMsg.SetPrimServer(UserId);
@@ -191,7 +192,7 @@ public class Client {
 
         System.out.println("JoinState  : " + JoinState);
         System.out.println("GetPrimServer   :" + gameMsg.GetPrimServer());
-        System.out.println("GetPrimServer   :" + gameMsg.GetBackupServer());
+        System.out.println("GetbackServer   :" + gameMsg.GetBackupServer());
 
     }
 
@@ -334,11 +335,12 @@ public class Client {
                         }
                         break;
                     default:
-                        System.out.println("error input");
+                        System.out.println("error input :" + c);
+
                         break;
                 }
                 if((c!='2')&&(c!='3')&&(c!='4')&&(c!='1')&&(c!='0')&&(c!='9')){
-                    System.out.println("Input Error");
+
                 }
                 else {
                     gui.repaint();
