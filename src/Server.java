@@ -367,6 +367,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     private void handleBackupFail() {
         HashSet<String> alivePlayers = getAllAlive();
         if (alivePlayers.isEmpty()) {  // only one player
+            System.out.println("only one player alive!");
             csi = null;
             gameMsg.SetBackupServer("");
         } else {
@@ -390,6 +391,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                 HashSet<String> alivePlayers = getAllAlive();
                 String bs = gameMsg.GetBackupServer();
                 if (bs == null || bs.equals("") || !alivePlayers.contains(bs)) {  // there is no backup server
+                    System.out.println("There is no backup server!");
                     handleBackupFail();
                 }
                 try {
