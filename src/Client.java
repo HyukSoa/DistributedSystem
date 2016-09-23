@@ -135,7 +135,7 @@ public class Client {
                         JoinState = 1;
                     }
                 } catch (RemoteException |NotBoundException e) {
-                    //e.printStackTrace();
+
                     JoinState = 1;
                     gameMsg.SetisServer(1);
                     gameMsg.SetPrimServer(UserId);
@@ -192,7 +192,8 @@ public class Client {
 
         System.out.println("JoinState  : " + JoinState);
         System.out.println("GetPrimServer   :" + gameMsg.GetPrimServer());
-        System.out.println("GetbackServer   :" + gameMsg.GetBackupServer());
+
+        System.out.println("GetBackupServer   :" + gameMsg.GetBackupServer());
 
     }
 

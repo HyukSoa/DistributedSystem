@@ -352,6 +352,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
 
             try {
                 crmi.updateServer(ps, bs);
+                System.out.println("player "+playerId+" should have received ps bs");
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -372,13 +373,16 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             String newBackup = alivePlayers.iterator().next();
             genBackup(newBackup);
             broadcastServers(alivePlayers, gameMsg.GetUserName(), newBackup);
+            System.out.println("broadcasted "+gameMsg.GetUserName()+" and "+newBackup);
+            System.out.println("to "+alivePlayers.toString());
+
         }
     }
 
     @Override
     public void run() {
 
-        int timeout = 200;
+        int timeout = 20;
         System.out.println("Server " + gameMsg.GetUserName() + " started!");
         while (true) {
             if (gameMsg.GetIsServer() == 1){  // primary server
@@ -414,6 +418,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                     bcri.callClient();
                 } catch (RemoteException e) {  // primary server fails
                     // turn myself to primary server
+                    System.out.println("Detected primary server fail by backup server!");
                     String me = gameMsg.GetBackupServer();
                     assert me.equals(gameMsg.GetUserName());
                     gameMsg.SetPrimServer(me);
