@@ -279,6 +279,8 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
         try {
             assert cri.containsKey(newBackup);
             crmi = cri.get(newBackup);
+            crmi.updateServer(gameMsg.GetUserName(), newBackup);
+
             crmi.becomeBackup();
             Registry rg = LocateRegistry.getRegistry();
             csi = (ClientServerInterf) rg.lookup(serverPrefix + newBackup);
@@ -333,6 +335,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                 }
             }
         }
+        System.out.println(alivePlayers.toString());
         return alivePlayers;
     }
 
@@ -372,6 +375,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             gameMsg.SetBackupServer("");
         } else {
             String newBackup = alivePlayers.iterator().next();
+            System.out.println("Decide to assign new backup: "+ newBackup);
             genBackup(newBackup);
             broadcastServers(alivePlayers, gameMsg.GetUserName(), newBackup);
             System.out.println("broadcasted "+gameMsg.GetUserName()+" and "+newBackup);
@@ -384,7 +388,9 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     public void run() {
 
         int timeout = 20;
-        System.out.println("Server " + gameMsg.GetUserName() + " started!");
+        System.out.println("Server " + gameMsg.GetIsServer() + " started!");
+        System.out.println("Primary Server is " + gameMsg.GetPrimServer());
+
         while (true) {
             if (gameMsg.GetIsServer() == 1){  // primary server
                 // assert gameMsg
@@ -433,11 +439,11 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
 
                     // e.printStackTrace();
                 }
-//                try {
-//                    sleep(timeout/10);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
+                try {
+                    sleep(timeout/10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

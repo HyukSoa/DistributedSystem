@@ -104,11 +104,16 @@ public class Client {
             gameMsg.SetisServer(1);
             gameMsg.SetPrimServer(UserId);
         } else {
-
+            try {
+                Thread.sleep(timeout+5);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             for (int index = 1; index < arrayList.size(); index += 2) {
 
                 try {
                     Registry rg = LocateRegistry.getRegistry();
+                    System.out.println("Looking up "+arrayList.get(index).toString());
                     clientRMIInterface = (ClientRMIInterface) rg.lookup("rmi://localhost/" + arrayList.get(index).toString());
 
                     String Primary = clientRMIInterface.getPrimaryServer();
@@ -241,7 +246,7 @@ public class Client {
             Score = (ArrayList) MazeState.PlayerScoreList.clone();
         }
         else {
-            System.out.println("gameMSG :" + gameMsg.GetUserName());
+            System.out.println("gameMSG :" + GameMsg.UserName);
             Maze = JoinUp.getMaze().clone();
             Score = (ArrayList) JoinUp.getPlayerScoreList().clone();
         }
@@ -252,17 +257,23 @@ public class Client {
                 Score = (ArrayList) MazeState.PlayerScoreList.clone();
             }
             else {
-                System.out.println("gameMSG :" + gameMsg.GetUserName());
+                System.out.println("gameMSG :" + GameMsg.UserName);
                 Maze = JoinUp.getMaze().clone();
                 Score = (ArrayList) JoinUp.getPlayerScoreList().clone();
             }
 
             try {
                 if (gameMsg.GetIsServer() == 1) {
-                    JoinUp = server.refreshSate(gameMsg.GetUserName());
+                    if(server == null)
+                    {
+                        System.out.println("Old Server is NULL");
+                        server = clientRMI.backserver;
+                    }
+                    JoinUp = server.refreshSate(GameMsg.UserName);
+
                 }
                 else {
-                    JoinUp = clientServerInterf.refreshSate(gameMsg.GetUserName());
+                    JoinUp = clientServerInterf.refreshSate(GameMsg.UserName);
                     MazeState.Maze = JoinUp.getMaze().clone();
                     MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                 }
@@ -275,11 +286,11 @@ public class Client {
                 {
                     case '1':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goUp);
+                            JoinUp = server.movePosition(GameMsg.UserName,MoveAction.goUp);
                         }
                         else {
                             //System.out.println("gameMSG :" + gameMsg.GetUserName());
-                            JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goUp);
+                            JoinUp = clientServerInterf.movePosition(GameMsg.UserName, MoveAction.goUp);
                             MazeState.Maze = JoinUp.getMaze().clone();
                             MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
 
@@ -287,51 +298,51 @@ public class Client {
                         break;
                     case '2':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goDown);
+                            JoinUp = server.movePosition(GameMsg.UserName,MoveAction.goDown);
                         }
                         else {
-                            JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goDown);
+                            JoinUp = clientServerInterf.movePosition(GameMsg.UserName, MoveAction.goDown);
                             MazeState.Maze = JoinUp.getMaze().clone();
                             MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '3':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goLeft);
+                            JoinUp = server.movePosition(GameMsg.UserName,MoveAction.goLeft);
                         }
                         else {
-                            JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goLeft);
+                            JoinUp = clientServerInterf.movePosition(GameMsg.UserName, MoveAction.goLeft);
                             MazeState.Maze = JoinUp.getMaze().clone();
                             MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '4':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = server.movePosition(gameMsg.GetUserName(),MoveAction.goRight);
+                            JoinUp = server.movePosition(GameMsg.UserName,MoveAction.goRight);
                         }
                         else {
-                            JoinUp = clientServerInterf.movePosition(gameMsg.GetUserName(), MoveAction.goRight);
+                            JoinUp = clientServerInterf.movePosition(GameMsg.UserName, MoveAction.goRight);
                             MazeState.Maze = JoinUp.getMaze().clone();
                             MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '0':
                         if (gameMsg.GetIsServer() == 1) {
-                            JoinUp = server.refreshSate(gameMsg.GetUserName());
+                            JoinUp = server.refreshSate(GameMsg.UserName);
                         }
                         else {
-                            JoinUp = clientServerInterf.refreshSate(gameMsg.GetUserName());
+                            JoinUp = clientServerInterf.refreshSate(GameMsg.UserName);
                             MazeState.Maze = JoinUp.getMaze().clone();
                             MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
                         }
                         break;
                     case '9':
                         if (gameMsg.GetIsServer() == 1) {
-                            server.exitGame(gameMsg.GetUserName());
+                            server.exitGame(GameMsg.UserName);
                             gui.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                         }
                         else {
-                            clientServerInterf.exitGame(gameMsg.GetUserName());
+                            clientServerInterf.exitGame(GameMsg.UserName);
                             gui.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                         }
                         break;
@@ -348,6 +359,16 @@ public class Client {
                     //System.out.println("Socore list : "+ Score);
                     //UserList = (ArrayList) updateData.SendMovement((int)c).clone();
                 }
+            } catch (RemoteException e) {
+                System.out.println("Cannot connect server, continue..");
+                Registry rg = null;
+                try {
+                    rg = LocateRegistry.getRegistry();
+                    clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server"+gameMsg.GetPrimServer());
+                } catch (RemoteException | NotBoundException e1) {
+                    e1.printStackTrace();
+                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
