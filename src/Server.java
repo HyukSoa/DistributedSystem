@@ -2,6 +2,8 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
@@ -277,10 +279,11 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             assert cri.containsKey(newBackup);
             crmi = cri.get(newBackup);
             crmi.becomeBackup();
-            csi = (ClientServerInterf) Naming.lookup(serverPrefix + newBackup);
+            Registry rg = LocateRegistry.getRegistry();
+            csi = (ClientServerInterf) rg.lookup(serverPrefix + newBackup);
             csi.regularBackup(refreshSate(gameMsg.GetUserName()));
             gameMsg.SetBackupServer(newBackup);
-        } catch (NotBoundException | MalformedURLException | RemoteException e) {
+        } catch (NotBoundException | RemoteException e) {
             e.printStackTrace();
         }
         return true;
@@ -314,11 +317,12 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                 }
             } else {
                 try {
-                    crmi = (ClientRMIInterface) Naming.lookup(clientPrefix + playerId);
+                    Registry rg = LocateRegistry.getRegistry();
+                    crmi = (ClientRMIInterface) rg.lookup(clientPrefix + playerId);
                     cri.put(playerId, crmi);
                     // if no exception occurs, add this player to recentPlayers.
                     alivePlayers.add(playerId);
-                } catch (NotBoundException | MalformedURLException | RemoteException e) {  // if it's not available, then:
+                } catch (NotBoundException | RemoteException e) {  // if it's not available, then:
                     e.printStackTrace();
                     try {
                         exitGame(playerId);
@@ -397,8 +401,9 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                     bcri = cri.get(ps);
                 else {
                     try {
-                        bcri = (ClientRMIInterface) Naming.lookup(serverPrefix + ps);
-                    } catch (NotBoundException | MalformedURLException | RemoteException e) {
+                        Registry rg = LocateRegistry.getRegistry();
+                        bcri = (ClientRMIInterface) rg.lookup(serverPrefix + ps);
+                    } catch (NotBoundException | RemoteException e) {
                         e.printStackTrace();
                     }
                     cri.put(ps, bcri);

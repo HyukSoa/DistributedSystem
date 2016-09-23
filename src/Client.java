@@ -168,6 +168,7 @@ public class Client {
            Registry registry = LocateRegistry.getRegistry();//提供serverIP
            try {
                registry.bind("rmi://localhost/"+UserId, clientRMI);
+               System.out.println("User "+UserId+" registered clientRMI!");
            } catch (AlreadyBoundException e) {
                e.printStackTrace();
            }
@@ -177,7 +178,6 @@ public class Client {
        if (gameMsg.GetIsServer() == 2) {
            try {
                clientRMI.becomeBackup();
-               //...
            } catch (RemoteException e) {
                e.printStackTrace();
            }
