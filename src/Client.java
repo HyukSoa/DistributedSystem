@@ -166,14 +166,14 @@ public class Client {
                         break;
                     case 2:
                         Thread.sleep(timeout);
-                        clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
+                        clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + GameMsg.PrimaryServer);
                         JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
                         Maze = JoinUp.getMaze().clone();
                         interupt = false;
                         break;
                     case 3:
                         Thread.sleep(timeout);
-                        clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
+                        clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + GameMsg.PrimaryServer);
                         JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
                         Maze = JoinUp.getMaze().clone();
                         interupt = false;
