@@ -45,9 +45,19 @@ public class GUI extends JFrame {
                         graphics.drawString("*", 58 + j * 30, 83 + i * 30);
                     }
                     if ((maze[i][j] != 0)&&(maze[i][j] != -1)) {
-                        graphics.setColor(Color.RED);
-                        graphics.setFont(new Font(null, 0, 25));
-                        graphics.drawString(String.valueOf(maze[i][j]), 58 + j * 30, 75 + i * 30);
+                        if (maze[i][j] > 9 )
+                        {
+                            graphics.setFont(new Font(null, 0, 15));
+                            graphics.setColor(Color.RED);
+                            graphics.drawString(String.valueOf(maze[i][j]), 53 + j * 30, 75 + i * 30);
+                        }
+                        else 
+                        {
+                            graphics.setFont(new Font(null, 0, 25));
+                            graphics.setColor(Color.RED);
+                            graphics.drawString(String.valueOf(maze[i][j]), 58 + j * 30, 75 + i * 30);
+                        }
+
                     }
                 }
             }
