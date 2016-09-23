@@ -113,17 +113,17 @@ public class Client {
 
                     String Primary = clientRMIInterface.getPrimaryServer();
                     String Backup = clientRMIInterface.getBackupServer();
-                    GameMsg.PrimaryServer = Primary;
-                    GameMsg.BackupServer = Backup;
+                    //GameMsg.PrimaryServer = Primary;
+                    //GameMsg.BackupServer = Backup;
                     System.out.println("Primary = "+Primary);
                     System.out.println("Backup = "+Backup);
-                    if ((Primary != null) && (Backup != null)) {
+                    if ((Primary != null) && (Backup != null) && (!Backup.equals(""))) {
                         gameMsg.SetisServer(0);
                         gameMsg.SetPrimServer(Primary);
                         gameMsg.SetBackupServer(Backup);
                         JoinState = 3;
                         break;
-                    } else if ((Primary != null) && (Backup == null)) {
+                    } else if ((Primary != null) && (Backup == null || Backup.equals(""))) {
                         gameMsg.SetisServer(2);
                         gameMsg.SetPrimServer(Primary);
                         gameMsg.SetBackupServer(UserId);
