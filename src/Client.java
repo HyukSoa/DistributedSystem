@@ -5,10 +5,13 @@ import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -38,20 +41,11 @@ public class Client {
 
     public Client(String ID) {
 
-        try {
-            //在RMI服务注册表中查找名称为Trakcer的对象，并调用其上的方法
-            TrackerInterface Tracker = (TrackerInterface) Naming.lookup("rmi://localhost:8888/Tracker");
-            //BufferedReader buf = new BufferedReader(new InputStreamReader(System.in));
-            /*boolean judege = false;
-            while (!judege) {
 
-                UserId = buf.readLine();
-                if () {
-                    judege = true;
-                } else {
-                    System.out.println("error wrong name");
-                }
-            }*/
+        //在RMI服务注册表中查找名称为Trakcer的对象，并调用其上的方法
+        TrackerInterface Tracker = null;
+        try {
+            Tracker = (TrackerInterface) Naming.lookup("rmi://localhost:8888/Tracker");
             UserId = ID;
             Tracker.helloWorld(UserId);
             System.out.println("Set name Successful");
@@ -63,15 +57,23 @@ public class Client {
             System.out.println(Tracker.GetNForTracker());
             gameMsg.SetK_Num(Tracker.GetNForTracker());
             System.out.println(Tracker.GetNForTracker());
-        } catch (NotBoundException ignored) {
-
-        } catch (MalformedURLException e) {
-
-        } catch (RemoteException e) {
-
-        }  catch (IOException e) {
-
+        } catch (NotBoundException | MalformedURLException | RemoteException e) {
+            e.printStackTrace();
         }
+        //BufferedReader buf = new BufferedReader(new InputStreamReader(System.in));
+        /*boolean judege = false;
+        while (!judege) {
+
+            UserId = buf.readLine();
+            if () {
+                judege = true;
+            } else {
+                System.out.println("error wrong name");
+            }
+        }*/
+
+
+
         ArrayList arrayList = gameMsg.GetUserList();
         //在RMI服务注册表中查找名称为Trakcer的对象，并调用其上的方法
         //System.out.println(arrayList.toString());
@@ -85,18 +87,22 @@ public class Client {
             for (int index = 1; index < arrayList.size(); index += 2) {
 
                 try {
-                    clientRMIInterface = (ClientRMIInterface) Naming.lookup("rmi://localhost:8000/" + arrayList.get(index).toString());
+                    Registry rg = LocateRegistry.getRegistry();
+                    clientRMIInterface = (ClientRMIInterface) rg.lookup("rmi://localhost/" + arrayList.get(index).toString());
                     String Primary = clientRMIInterface.getPrimaryServer();
                     String Backup = clientRMIInterface.getBackupServer();
 
+                    System.out.println("Primary = "+Primary);
+                    System.out.println("Backup = "+Backup);
                     if ((Primary != null) && (Backup != null)) {
                         gameMsg.SetisServer(0);
                         gameMsg.SetPrimServer(Primary);
                         JoinState = 3;
                         break;
                     } else if ((Primary != null) && (Backup == null)) {
-                        gameMsg.SetisServer(0);
+                        gameMsg.SetisServer(2);
                         gameMsg.SetPrimServer(Primary);
+                        gameMsg.SetBackupServer(gameMsg.GetUserName());
                         JoinState = 2;
                         break;
                     } else {
@@ -104,17 +110,8 @@ public class Client {
                         gameMsg.SetPrimServer(UserId);
                         JoinState = 1;
                     }
-                } catch (RemoteException e) {
-                    JoinState = 1;
-                    gameMsg.SetisServer(1);
-                    gameMsg.SetPrimServer(UserId);
-                    continue;
-                } catch (NotBoundException e) {
-                    JoinState = 1;
-                    gameMsg.SetisServer(1);
-                    gameMsg.SetPrimServer(UserId);
-                    continue;
-                } catch (MalformedURLException e) {
+                } catch (RemoteException |NotBoundException e) {
+                    e.printStackTrace();
                     JoinState = 1;
                     gameMsg.SetisServer(1);
                     gameMsg.SetPrimServer(UserId);
@@ -123,37 +120,41 @@ public class Client {
             }
         }
         try {
+            Registry rg = LocateRegistry.getRegistry();
             switch (JoinState) {
+
                 case 1:
                     InitMaze();
                     server = new Server();
-                    LocateRegistry.createRegistry(7000);//serverIP
-                    Naming.rebind("rmi://localhost:7000/"+UserId,server);
+//                    ClientServerInterf csi = (ClientServerInterf) UnicastRemoteObject.exportObject(server, 0);
+                    //serverIP
+                    try {
+                        rg.bind("rmi://localhost/server"+UserId, server);
+                    } catch (AlreadyBoundException e) {
+                        e.printStackTrace();
+                    }
                     gameMsg.SetPrimServer(UserId);
                     thread = new Thread(server);
                     thread.start();
                     System.out.println("JoinState " + JoinState);
                     break;
                 case 2:
-                    clientServerInterf = (ClientServerInterf) Naming.lookup("rmi://localhost:7000/" + gameMsg.GetPrimServer());
+                    clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
 
                     JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
                     Maze = JoinUp.getMaze().clone();
 
                     break;
                 case 3:
-                    clientServerInterf = (ClientServerInterf) Naming.lookup("rmi://localhost:7000/" + gameMsg.GetPrimServer());
+
+                    clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
                     JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
                     Maze = JoinUp.getMaze().clone();
                     break;
                 default:
                     break;
             }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (NotBoundException e) {
+        } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
         }
 
@@ -162,14 +163,25 @@ public class Client {
         System.out.println("GetPrimServer   :" + gameMsg.GetPrimServer());
 
        try {
-            clientRMI = new ClientRMI();
-            LocateRegistry.createRegistry(8000);//提供serverIP
-            Naming.rebind("rmi://localhost:8000/"+UserId,clientRMI);
-        } catch (RemoteException e) {
+           clientRMI = new ClientRMI();
+//           ClientRMIInterface crmii = (ClientRMIInterface) UnicastRemoteObject.exportObject(clientRMI, 0);
+           Registry registry = LocateRegistry.getRegistry();//提供serverIP
+           try {
+               registry.bind("rmi://localhost/"+UserId, clientRMI);
+           } catch (AlreadyBoundException e) {
+               e.printStackTrace();
+           }
+       } catch (RemoteException e) {
             e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+       }
+       if (gameMsg.GetIsServer() == 2) {
+           try {
+               clientRMI.becomeBackup();
+               //...
+           } catch (RemoteException e) {
+               e.printStackTrace();
+           }
+       }
     }
 
 
@@ -307,6 +319,7 @@ public class Client {
             }
         }
     }
+
 
     public void InitMaze()
     {

@@ -16,10 +16,10 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
     private GameMsg gameMsg = new GameMsg();
     private Random random = new Random();
     private ClientServerInterf csi = null;
-    private HashMap<String, ClientRMIInterface> cri = null;
+    public static HashMap<String, ClientRMIInterface> cri = null;
 
-    private String clientPrefix = "rmi://localhost:8000/";
-    private String serverPrefix = "rmi://localhost:7000/";
+    private String clientPrefix = "rmi://localhost/";
+    private String serverPrefix = "rmi://localhost/server";
 
     /**
      * 必须定义构造方法，即使是默认构造方法，也必须把它明确地写出来，因为它必须抛出RemoteException异常
@@ -298,7 +298,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
             String playerId = (String) localPlayerScoreList.get(i);
             if (playerId.equals(gameMsg.GetUserName()))  continue;
             ClientRMIInterface crmi;
-            if (cri.containsKey(playerId)) {
+            if (cri != null && cri.containsKey(playerId)) {
                 crmi = cri.get(playerId);
                 try {
                     crmi.callClient();
