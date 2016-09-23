@@ -72,6 +72,26 @@ public class Client {
             }
         }*/
 
+        try {
+            clientRMI = new ClientRMI();
+//           ClientRMIInterface crmii = (ClientRMIInterface) UnicastRemoteObject.exportObject(clientRMI, 0);
+            Registry registry = LocateRegistry.getRegistry();//提供serverIP
+            try {
+                registry.bind("rmi://localhost/"+UserId, clientRMI);
+                System.out.println("User "+UserId+" registered clientRMI!");
+            } catch (AlreadyBoundException e) {
+                e.printStackTrace();
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        if (gameMsg.GetIsServer() == 2) {
+            try {
+                clientRMI.becomeBackup();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
 
 
         ArrayList arrayList = gameMsg.GetUserList();
@@ -89,9 +109,11 @@ public class Client {
                 try {
                     Registry rg = LocateRegistry.getRegistry();
                     clientRMIInterface = (ClientRMIInterface) rg.lookup("rmi://localhost/" + arrayList.get(index).toString());
+
                     String Primary = clientRMIInterface.getPrimaryServer();
                     String Backup = clientRMIInterface.getBackupServer();
-
+                    GameMsg.PrimaryServer = Primary;
+                    GameMsg.BackupServer = Backup;
                     System.out.println("Primary = "+Primary);
                     System.out.println("Backup = "+Backup);
                     if ((Primary != null) && (Backup != null)) {
@@ -133,12 +155,14 @@ public class Client {
                     } catch (AlreadyBoundException e) {
                         e.printStackTrace();
                     }
+                    System.out.println("User " + UserId +" registered " + "as primary server!");
                     gameMsg.SetPrimServer(UserId);
                     thread = new Thread(server);
                     thread.start();
                     System.out.println("JoinState " + JoinState);
                     break;
                 case 2:
+                    Thread.sleep(500);
                     clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
 
                     JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
@@ -146,7 +170,7 @@ public class Client {
 
                     break;
                 case 3:
-
+                    Thread.sleep(500);
                     clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
                     JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
                     Maze = JoinUp.getMaze().clone();
@@ -156,32 +180,15 @@ public class Client {
             }
         } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
 
         System.out.println(JoinState);
         System.out.println("GetPrimServer   :" + gameMsg.GetPrimServer());
 
-       try {
-           clientRMI = new ClientRMI();
-//           ClientRMIInterface crmii = (ClientRMIInterface) UnicastRemoteObject.exportObject(clientRMI, 0);
-           Registry registry = LocateRegistry.getRegistry();//提供serverIP
-           try {
-               registry.bind("rmi://localhost/"+UserId, clientRMI);
-               System.out.println("User "+UserId+" registered clientRMI!");
-           } catch (AlreadyBoundException e) {
-               e.printStackTrace();
-           }
-       } catch (RemoteException e) {
-            e.printStackTrace();
-       }
-       if (gameMsg.GetIsServer() == 2) {
-           try {
-               clientRMI.becomeBackup();
-           } catch (RemoteException e) {
-               e.printStackTrace();
-           }
-       }
+
     }
 
 
@@ -222,6 +229,17 @@ public class Client {
         gui.setVisible(true);
 
         ArrayList UserList = new ArrayList();
+
+        if (gameMsg.GetIsServer() == 1) {
+            Maze = MazeState.GetMaze().clone();
+            Score = (ArrayList) MazeState.PlayerScoreList.clone();
+        }
+        else {
+            System.out.println("gameMSG :" + gameMsg.GetUserName());
+            Maze = JoinUp.getMaze().clone();
+            Score = (ArrayList) JoinUp.getPlayerScoreList().clone();
+        }
+
         while (IsGoing) {
             if (gameMsg.GetIsServer() == 1) {
                 Maze = MazeState.GetMaze().clone();
@@ -233,10 +251,19 @@ public class Client {
                 Score = (ArrayList) JoinUp.getPlayerScoreList().clone();
             }
 
-            //gui = new GUI(Score,Maze);
-            gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            gui.setVisible(true);
             try {
+                if (gameMsg.GetIsServer() == 1) {
+                    JoinUp = server.refreshSate(gameMsg.GetUserName());
+                }
+                else {
+                    JoinUp = clientServerInterf.refreshSate(gameMsg.GetUserName());
+                    MazeState.Maze = JoinUp.getMaze().clone();
+                    MazeState.PlayerScoreList = (ArrayList) JoinUp.getPlayerScoreList().clone();
+                }
+                //gui = new GUI(Score,Maze);
+                gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                gui.setVisible(true);
+
                 char c = (char) new BufferedReader(new InputStreamReader(System.in)).read();
                 switch (c)
                 {

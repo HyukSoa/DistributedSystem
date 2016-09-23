@@ -70,6 +70,12 @@ public class GUI extends JFrame {
 
                 defaultListModel.addElement(string);
             }
+            string = "Primary Server:  ";
+            string = string.concat(GameMsg.PrimaryServer);
+            defaultListModel.addElement(string);
+            string = "BackUP Server: ";
+            string = string.concat(GameMsg.BackupServer);
+            defaultListModel.addElement(string);
 
         }
     }

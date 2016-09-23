@@ -27,6 +27,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
      * 必须定义构造方法，即使是默认构造方法，也必须把它明确地写出来，因为它必须抛出RemoteException异常
      */
     public Server() throws RemoteException{
+        cri = new HashMap<>();
     }
 
     /**
@@ -307,7 +308,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                     crmi.callClient();
                     alivePlayers.add(playerId);
                 } catch (RemoteException e) {
-                    e.printStackTrace();
+                    // e.printStackTrace();
                     try {
                         exitGame(playerId);
                         cri.remove(playerId);
@@ -323,7 +324,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                     // if no exception occurs, add this player to recentPlayers.
                     alivePlayers.add(playerId);
                 } catch (NotBoundException | RemoteException e) {  // if it's not available, then:
-                    e.printStackTrace();
+                    // e.printStackTrace();
                     try {
                         exitGame(playerId);
                     } catch (RemoteException e1) {
@@ -402,7 +403,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                 else {
                     try {
                         Registry rg = LocateRegistry.getRegistry();
-                        bcri = (ClientRMIInterface) rg.lookup(serverPrefix + ps);
+                        bcri = (ClientRMIInterface) rg.lookup(clientPrefix + ps);
                     } catch (NotBoundException | RemoteException e) {
                         e.printStackTrace();
                     }
@@ -423,13 +424,13 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
                     assert !alivePlayers.contains(ps);
                     handleBackupFail();
 
-                    e.printStackTrace();
+                    // e.printStackTrace();
                 }
-                try {
-                    sleep(timeout/10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    sleep(timeout/10);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
             }
         }
     }
