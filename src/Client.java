@@ -38,6 +38,7 @@ public class Client {
 
     ClientRMIInterface clientRMIInterface;
     Thread thread;
+    int timeout = 100;
 
     public Client(String ID) {
 
@@ -162,7 +163,7 @@ public class Client {
                     System.out.println("JoinState " + JoinState);
                     break;
                 case 2:
-                    Thread.sleep(500);
+                    Thread.sleep(timeout);
                     clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
 
                     JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
@@ -170,7 +171,7 @@ public class Client {
 
                     break;
                 case 3:
-                    Thread.sleep(500);
+                    Thread.sleep(timeout);
                     clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
                     JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
                     Maze = JoinUp.getMaze().clone();
