@@ -129,7 +129,7 @@ public class Client {
                         JoinState = 3;
                         break;
                     } else if ((Primary != null) && (Backup == null || Backup.equals(""))) {
-                        gameMsg.SetisServer(2);
+                        gameMsg.SetisServer(2);//////modify seting the backserver  *************************************************8
                         gameMsg.SetPrimServer(Primary);
                         gameMsg.SetBackupServer(UserId);
                         JoinState = 2;
