@@ -38,8 +38,8 @@ public class Client {
 
     ClientRMIInterface clientRMIInterface;
     Thread thread;
-    int timeout = 100;
-
+    int timeout = 10;
+    boolean interupt = true;
     public Client(String ID) {
 
 
@@ -142,53 +142,56 @@ public class Client {
                 }
             }
         }
-        try {
-            Registry rg = LocateRegistry.getRegistry();
-            switch (JoinState) {
+        while(interupt) {
+            try {
+                Registry rg = LocateRegistry.getRegistry();
 
-                case 1:
-                    InitMaze();
-                    server = new Server();
-//                    ClientServerInterf csi = (ClientServerInterf) UnicastRemoteObject.exportObject(server, 0);
-                    //serverIP
-                    try {
-                        rg.bind("rmi://localhost/server"+UserId, server);
-                    } catch (AlreadyBoundException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("User " + UserId +" registered " + "as primary server!");
-                    gameMsg.SetPrimServer(UserId);
-                    thread = new Thread(server);
-                    thread.start();
-                    System.out.println("JoinState " + JoinState);
-                    break;
-                case 2:
-                    Thread.sleep(timeout);
-                    clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
+                switch (JoinState) {
 
-                    JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
-                    Maze = JoinUp.getMaze().clone();
-
-                    break;
-                case 3:
-                    Thread.sleep(timeout);
-                    clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
-                    JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
-                    Maze = JoinUp.getMaze().clone();
-                    break;
-                default:
-                    break;
+                    case 1:
+                        InitMaze();
+                        server = new Server();
+                        try {
+                            rg.bind("rmi://localhost/server" + UserId, server);
+                        } catch (AlreadyBoundException e) {
+                            e.printStackTrace();
+                        }
+                        System.out.println("User " + UserId + " registered " + "as primary server!");
+                        gameMsg.SetPrimServer(UserId);
+                        thread = new Thread(server);
+                        thread.start();
+                        System.out.println("JoinState " + JoinState);
+                        interupt = false;
+                        break;
+                    case 2:
+                        Thread.sleep(timeout);
+                        clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
+                        JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
+                        Maze = JoinUp.getMaze().clone();
+                        interupt = false;
+                        break;
+                    case 3:
+                        Thread.sleep(timeout);
+                        clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + gameMsg.GetPrimServer());
+                        JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
+                        Maze = JoinUp.getMaze().clone();
+                        interupt = false;
+                        break;
+                    default:
+                        break;
+                }
+            } catch (RemoteException | NotBoundException e) {
+                //e.printStackTrace();
+                interupt = true;
+                //System.out.println("Interupt : " + interupt);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } catch (RemoteException | NotBoundException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
 
-
-        System.out.println(JoinState);
+        System.out.println("JoinState  : " + JoinState);
         System.out.println("GetPrimServer   :" + gameMsg.GetPrimServer());
-
+        System.out.println("GetPrimServer   :" + gameMsg.GetBackupServer());
 
     }
 
@@ -196,7 +199,7 @@ public class Client {
     public void InitGame(){
 
         System.out.println("GetIsServer " +gameMsg.GetIsServer());
-        int UserNum = 5;
+        int UserNum = 0;
         if(gameMsg.GetIsServer() == 1)
         {
             Maze = MazeState.GetMaze().clone();
@@ -377,15 +380,7 @@ public class Client {
         Maze[LocalX][LocalY] = 1;
 
         MazeState.SetMaze(Maze);
-        /*for(int i = 0; i<N_Num;i++)
-        {
-            for (int j = 0;j<N_Num;j++)
-            {
-                System.out.print(Maze[i][j]+ " " );
-            }
-            System.out.println();
-        }*/
-        //System.out.println(Maze.);
+
         Score.add(UserId);
         Score.add(0);
         Score.add(1);
