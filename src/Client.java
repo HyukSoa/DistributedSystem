@@ -85,13 +85,13 @@ public class Client {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        if (gameMsg.GetIsServer() == 2) {
-            try {
-                clientRMI.becomeBackup();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        }
+//        if (gameMsg.GetIsServer() == 2) {
+//            try {
+//                clientRMI.becomeBackup();
+//            } catch (RemoteException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
 
         ArrayList arrayList = gameMsg.GetUserList();
@@ -104,11 +104,12 @@ public class Client {
             gameMsg.SetPrimServer(UserId);
         } else {
             try {
-                Thread.sleep(timeout+5);
+                Thread.sleep(timeout+50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            for (int index = 1; index < arrayList.size(); index += 2) {
+            JoinState = 1;
+            for (int index = arrayList.size() - 3 ; index > 0; index -= 2) {
 
                 try {
                     Registry rg = LocateRegistry.getRegistry();
@@ -121,23 +122,26 @@ public class Client {
                     //GameMsg.BackupServer = Backup;
                     System.out.println("Primary = "+Primary);
                     System.out.println("Backup = "+Backup);
-                    if (Primary != null) {
-                        gameMsg.SetisServer(0);
-                        gameMsg.SetPrimServer(Primary);
-                        if (Backup != null)
-                            gameMsg.SetBackupServer(Backup);
-                        JoinState = 2;
-                        break;
-                    } else {
-                        gameMsg.SetisServer(1);
-                        gameMsg.SetPrimServer(UserId);
-                        JoinState = 1;
+                    JoinState = 2;
+                    while (Primary == null) {
+                        // find an alive player, but his primary server is null, which means that
+                        // he doesn't know the primary server either. Keep asking him.
+                        try {
+                            Thread.sleep(1);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Primary = clientRMIInterface.getPrimaryServer();
+                        Backup = clientRMIInterface.getBackupServer();
                     }
+                    gameMsg.SetisServer(0);
+                    gameMsg.SetPrimServer(Primary);
+                    if (Backup != null)
+                        gameMsg.SetBackupServer(Backup);
+                    break;
                 } catch (RemoteException |NotBoundException e) {
-
+                    // Met a dead player
                     JoinState = 1;
-                    gameMsg.SetisServer(1);
-                    gameMsg.SetPrimServer(UserId);
                     continue;
                 }
             }
@@ -150,6 +154,8 @@ public class Client {
 
                     case 1:
                         InitMaze();
+                        gameMsg.SetisServer(1);
+                        gameMsg.SetPrimServer(UserId);
                         server = new Server();
                         try {
                             rg.bind("rmi://localhost/server" + UserId, server);
@@ -157,7 +163,6 @@ public class Client {
                             e.printStackTrace();
                         }
                         System.out.println("User " + UserId + " registered " + "as primary server!");
-                        gameMsg.SetPrimServer(UserId);
                         thread = new Thread(server);
                         thread.start();
                         System.out.println("JoinState " + JoinState);

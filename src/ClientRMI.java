@@ -45,7 +45,7 @@ public class ClientRMI extends UnicastRemoteObject implements ClientRMIInterface
             try {
                 crmi.updateServer(ps, bs);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                System.out.println("Unable to achieve player "+playerId);
             }
         }
         return true;
