@@ -17,7 +17,7 @@ public class Server extends UnicastRemoteObject implements ClientServerInterf, R
 
     private GameMsg gameMsg = new GameMsg();
     private Random random = new Random();
-    private ClientServerInterf csi = null;
+    public static ClientServerInterf csi = null;
     public static HashMap<String, ClientRMIInterface> cri = null;
 
     private String clientPrefix = "rmi://localhost/";

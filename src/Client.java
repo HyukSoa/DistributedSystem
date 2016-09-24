@@ -25,7 +25,6 @@ public class Client {
     //MazeState mazeState = new MazeState();
     GameMsg gameMsg = new GameMsg();
     MazeState mazeState = new MazeState();
-    ClientServerInterf clientServer;
     ClientRMI clientRMI;
     Server server;
     GUI gui;
@@ -34,7 +33,7 @@ public class Client {
     ArrayList Score = new ArrayList();
     MazeAndScore JoinUp;
     //MazeState updateData;
-    ClientServerInterf clientServerInterf;
+    public static ClientServerInterf clientServerInterf;
 
     ClientRMIInterface clientRMIInterface;
     Thread thread;
@@ -122,16 +121,11 @@ public class Client {
                     //GameMsg.BackupServer = Backup;
                     System.out.println("Primary = "+Primary);
                     System.out.println("Backup = "+Backup);
-                    if ((Primary != null) && (Backup != null) && (!Backup.equals(""))) {
+                    if (Primary != null) {
                         gameMsg.SetisServer(0);
                         gameMsg.SetPrimServer(Primary);
-                        gameMsg.SetBackupServer(Backup);
-                        JoinState = 3;
-                        break;
-                    } else if ((Primary != null) && (Backup == null || Backup.equals(""))) {
-                        gameMsg.SetisServer(2);//////modify seting the backserver  *************************************************8
-                        gameMsg.SetPrimServer(Primary);
-                        gameMsg.SetBackupServer(UserId);
+                        if (Backup != null)
+                            gameMsg.SetBackupServer(Backup);
                         JoinState = 2;
                         break;
                     } else {
@@ -170,13 +164,6 @@ public class Client {
                         interupt = false;
                         break;
                     case 2:
-                        Thread.sleep(timeout);
-                        clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + GameMsg.PrimaryServer);
-                        JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
-                        Maze = JoinUp.getMaze().clone();
-                        interupt = false;
-                        break;
-                    case 3:
                         Thread.sleep(timeout);
                         clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + GameMsg.PrimaryServer);
                         JoinUp = clientServerInterf.addPlayer(gameMsg.GetUserName());
@@ -282,6 +269,11 @@ public class Client {
                 gui.setVisible(true);
 
                 char c = (char) new BufferedReader(new InputStreamReader(System.in)).read();
+                if(server == null)
+                {
+                    System.out.println("Old Server is NULL");
+                    server = clientRMI.backserver;
+                }
                 switch (c)
                 {
                     case '1':

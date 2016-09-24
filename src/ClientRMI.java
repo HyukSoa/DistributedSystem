@@ -88,7 +88,26 @@ public class ClientRMI extends UnicastRemoteObject implements ClientRMIInterface
 
     @Override
     public void updateServer(String primaryServerId, String backupServerId) throws RemoteException {
-        gameMsg.SetPrimServer(primaryServerId);
-        gameMsg.SetBackupServer(backupServerId);
+        Registry rg = LocateRegistry.getRegistry();
+        try {
+            if (gameMsg.GetIsServer() == 0) {
+                if (!primaryServerId.equals(gameMsg.GetPrimServer())) {
+                    Client.clientServerInterf = (ClientServerInterf) rg.lookup("rmi://localhost/server" + GameMsg.PrimaryServer);
+                }
+            } else if (gameMsg.GetIsServer() == 1) {
+                if (!backupServerId.equals(gameMsg.GetBackupServer())) {
+                    Server.csi = (ClientServerInterf) rg.lookup("rmi://localhost/server" + GameMsg.BackupServer);
+                }
+            } else {
+                if (!primaryServerId.equals(gameMsg.GetPrimServer())) {
+                    Server.csi = (ClientServerInterf) rg.lookup("rmi://localhost/server" + GameMsg.PrimaryServer);
+                }
+            }
+            gameMsg.SetPrimServer(primaryServerId);
+            gameMsg.SetBackupServer(backupServerId);
+        } catch (NotBoundException e) {
+            e.printStackTrace();
+        }
+
     }
 }
