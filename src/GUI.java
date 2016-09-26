@@ -69,7 +69,7 @@ public class GUI extends JFrame {
 
                 string = "UserID : ";
                 string = string.concat(list.get(i).toString());
-                string = string.concat("  Curret Score : ");
+                string = string.concat("  Current Score : ");
 
                 i++;
                 string = string.concat(list.get(i).toString());
